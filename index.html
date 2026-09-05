@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exity — Discord servers and bots, built properly</title>
+<meta name="description" content="Exity builds Discord servers, custom bots, and the integrations that hold them together.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23090c10'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%237cffb2'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #090c10;
+    --bg-alt: #0d1218;
+    --panel: #121920;
+    --line: #1d262f;
+    --ink: #eef2f0;
+    --ink-dim: #98a6a1;
+    --ink-faint: #5a6661;
+    --accent: #7cffb2;
+    --accent-2: #3fd98a;
+    --warm: #ffb454;
+    --mono: 'JetBrains Mono', monospace;
+  }
+
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  a{ color: inherit; }
+  a:focus-visible, button:focus-visible, [tabindex]:focus-visible{
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+  h1, h2, h3{
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 500;
+    line-height: 1.12;
+    margin: 0;
+  }
+  .wrap{ max-width: 1080px; margin: 0 auto; padding: 0 32px; }
+  section{ position: relative; padding: 128px 0; overflow: hidden; }
+  section.tint{ background: var(--bg-alt); }
+
+  /* ---------- Nav ---------- */
+  nav.top{
+    position: sticky; top:0; z-index: 100;
+    display:flex; justify-content: space-between; align-items:center;
+    padding: 18px 32px;
+    background: rgba(9,12,16,0.72);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  nav.top .mark{ font-family:'Space Grotesk', sans-serif; font-weight: 600; font-size: 1.1rem; display:flex; align-items:center; gap:9px; text-decoration:none; }
+  nav.top .mark .dot{ width:9px; height:9px; border-radius:50%; background: var(--accent); box-shadow: 0 0 12px 2px rgba(124,255,178,0.55); }
+  nav.top .links{ display:flex; align-items:center; gap: 30px; font-size: 0.95rem; color: var(--ink-dim); }
+  nav.top .links a{ text-decoration:none; transition: color .15s ease; }
+  nav.top .links a:hover{ color: var(--ink); }
+  .btn{
+    display:inline-block;
+    padding: 13px 24px;
+    border-radius: 8px;
+    text-decoration:none;
+    font-size: 0.96rem;
+    font-weight: 500;
+    transition: transform .18s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
+  }
+  .btn.primary{
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #06130d;
+    box-shadow: 0 10px 30px -12px rgba(124,255,178,0.55);
+  }
+  .btn.primary:hover{ transform: translateY(-2px); box-shadow: 0 14px 36px -10px rgba(124,255,178,0.65); }
+  .btn.ghost{ border: 1px solid var(--line); color: var(--ink); }
+  .btn.ghost:hover{ border-color: var(--ink-faint); background: rgba(255,255,255,0.03); }
+  .btn.sm{ padding: 10px 18px; font-size: 0.88rem; }
+
+  .menu-toggle{
+    display:none;
+    background:none; border:none; color: var(--ink);
+    width: 36px; height: 28px; position: relative; cursor:pointer;
+  }
+  .menu-toggle span{
+    position:absolute; left:0; right:0; height:2px; background: var(--ink);
+    transition: transform .2s ease, opacity .2s ease;
+  }
+  .menu-toggle span:nth-child(1){ top: 4px; }
+  .menu-toggle span:nth-child(2){ top: 13px; }
+  .menu-toggle span:nth-child(3){ top: 22px; }
+  .menu-toggle.open span:nth-child(1){ transform: translateY(9px) rotate(45deg); }
+  .menu-toggle.open span:nth-child(2){ opacity:0; }
+  .menu-toggle.open span:nth-child(3){ transform: translateY(-9px) rotate(-45deg); }
+
+  .mobile-panel{
+    display:none;
+    position: fixed; top: 65px; left:0; right:0; z-index: 99;
+    background: rgba(9,12,16,0.97);
+    border-bottom: 1px solid var(--line);
+    padding: 18px 32px 28px;
+    flex-direction: column; gap: 18px;
+  }
+  .mobile-panel a{ text-decoration:none; color: var(--ink-dim); font-size: 1.05rem; }
+  .mobile-panel.open{ display:flex; }
+
+  /* ---------- Hero ---------- */
+  header.hero{ padding: 132px 0 110px; }
+  header.hero::before{
+    content:"";
+    position:absolute; top: -220px; left: 50%; transform: translateX(-46%);
+    width: 900px; height: 700px;
+    background: radial-gradient(closest-side, rgba(124,255,178,0.16), rgba(124,255,178,0) 70%);
+    pointer-events:none;
+  }
+  header.hero::after{
+    content:"";
+    position:absolute; top: -80px; right: -160px;
+    width: 560px; height: 560px;
+    background: radial-gradient(closest-side, rgba(255,180,84,0.10), rgba(255,180,84,0) 70%);
+    pointer-events:none;
+  }
+  .hero-grid{
+    position: relative; z-index:1;
+    display:grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 60px;
+    align-items: center;
+  }
+  .hero-grid p.kicker{
+    font-family: var(--mono);
+    color: var(--accent);
+    font-size: 0.9rem;
+    margin: 0 0 24px;
+  }
+  .hero-grid h1{
+    font-size: clamp(2.6rem, 5.2vw, 3.9rem);
+    max-width: 14ch;
+    margin-bottom: 24px;
+    letter-spacing: -0.01em;
+  }
+  .hero-grid .sub{
+    color: var(--ink-dim);
+    max-width: 48ch;
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+  }
+  .hero-grid .fine{
+    color: var(--ink-faint);
+    font-size: 0.94rem;
+    margin-bottom: 36px;
+  }
+  .hero-ctas{ display:flex; gap:16px; flex-wrap:wrap; }
+
+  .terminal{
+    position:relative; z-index:1;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 30px 80px -30px rgba(0,0,0,0.6), 0 0 0 1px rgba(124,255,178,0.04);
+  }
+  .terminal .bar{ display:flex; gap:7px; padding: 13px 15px; border-bottom: 1px solid var(--line); }
+  .terminal .bar span{ width:10px; height:10px; border-radius:50%; background: #232d36; }
+  .terminal .body{ padding: 24px 22px 28px; font-family: var(--mono); font-size: 0.88rem; color: var(--ink-dim); min-height: 220px; }
+  .terminal .line{ margin: 0 0 10px; white-space: pre-wrap; }
+  .terminal .prompt{ color: var(--accent); }
+  .terminal .out{ color: var(--ink-faint); }
+  .terminal .cursor{ display:inline-block; width: 7px; height: 1em; background: var(--accent); vertical-align: text-bottom; animation: blink 1s step-end infinite; }
+  @keyframes blink{ 50%{ opacity:0; } }
+
+  /* Problem */
+  .problem::before{
+    content:"";
+    position:absolute; bottom:-260px; left:-160px;
+    width: 620px; height: 620px;
+    background: radial-gradient(closest-side, rgba(255,180,84,0.10), rgba(255,180,84,0) 70%);
+    pointer-events:none;
+  }
+  .problem .inner{ position:relative; z-index:1; }
+  .problem p.statement{
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(1.7rem, 3.4vw, 2.5rem);
+    font-weight: 500;
+    max-width: 20ch;
+    line-height: 1.28;
+    margin-bottom: 30px;
+  }
+  .problem p.statement .fade{ color: var(--ink-faint); font-weight: 400; }
+  .problem p.detail{ color: var(--ink-dim); max-width: 58ch; font-size: 1.05rem; }
+
+  /* Highlights */
+  .highlights{ display:flex; flex-direction: column; gap: 88px; position:relative; z-index:1; }
+  .highlight{ display:grid; grid-template-columns: 1fr 1.2fr; gap: 48px; align-items: start; }
+  .highlight.reverse .h-mark{ order: 2; }
+  .highlight.reverse .h-text{ order: 1; text-align: right; margin-left:auto; }
+  .highlight .h-mark{ width: 34px; height: 34px; border-radius: 9px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
+  .highlight.reverse .h-mark{ background: linear-gradient(135deg, var(--warm), #ff8a5c); margin-left:auto; }
+  .highlight h3{ font-size: clamp(1.5rem, 2.6vw, 2.05rem); font-weight: 500; max-width: 15ch; margin: 18px 0 16px; }
+  .highlight.reverse h3{ margin-left:auto; }
+  .highlight p{ color: var(--ink-dim); max-width: 48ch; margin:0; font-size: 1.03rem; }
+  .highlight.reverse p{ margin-left:auto; }
+
+  section h2.h2{ font-size: clamp(1.9rem, 3.6vw, 2.6rem); max-width: 18ch; margin-bottom: 16px; position:relative; z-index:1; }
+  section p.lead{ color: var(--ink-dim); max-width: 58ch; font-size: 1.05rem; margin: 0 0 56px; position:relative; z-index:1; }
+
+  /* Services */
+  .services{ display:flex; flex-direction: column; position:relative; z-index:1; }
+  .service{ display:grid; grid-template-columns: 64px 1fr; gap: 28px; padding: 30px 0; border-top: 1px solid var(--line); }
+  .service:last-child{ border-bottom: 1px solid var(--line); }
+  .service .idx{ font-family: var(--mono); font-size: 0.95rem; color: var(--accent); padding-top: 4px; }
+  .service h3{ font-size: 1.28rem; margin-bottom: 9px; font-weight: 500; }
+  .service p{ color: var(--ink-dim); margin:0; max-width: 58ch; }
+
+  /* Process */
+  .process{ display:grid; grid-template-columns: repeat(4, 1fr); gap: 30px; position:relative; z-index:1; }
+  .step{ padding: 24px 22px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line); }
+  .step .n{ font-family: var(--mono); color: var(--accent); font-size: 0.9rem; margin-bottom: 16px; display:block; }
+  .step h3{ font-size: 1.1rem; margin-bottom: 8px; font-weight: 500; }
+  .step p{ color: var(--ink-dim); font-size: 0.94rem; margin:0; }
+
+  /* Work */
+  .work-grid{ display:grid; grid-template-columns: repeat(3, 1fr); gap: 22px; position:relative; z-index:1; }
+  .work-card{
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 28px 24px;
+    background: linear-gradient(160deg, var(--panel), var(--bg-alt));
+    transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+  }
+  .work-card:hover{ transform: translateY(-4px); border-color: rgba(124,255,178,0.35); box-shadow: 0 20px 46px -22px rgba(124,255,178,0.25); }
+  .work-card .kind{ display:inline-block; font-family: var(--mono); font-size: 0.78rem; color: var(--warm); background: rgba(255,180,84,0.1); padding: 4px 10px; border-radius: 6px; margin-bottom: 16px; }
+  .work-card h3{ font-size: 1.12rem; margin-bottom: 8px; font-weight: 500; }
+  .work-card p{ color: var(--ink-dim); font-size: 0.94rem; margin: 0; }
+
+  /* Contact / footer */
+  footer{ padding: 130px 0 60px; }
+  footer::before{
+    content:"";
+    position:absolute; top: -120px; right: -180px;
+    width: 620px; height: 620px;
+    background: radial-gradient(closest-side, rgba(124,255,178,0.13), rgba(124,255,178,0) 70%);
+    pointer-events:none;
+  }
+  footer .inner{ position:relative; z-index:1; }
+  footer h2{ margin-bottom: 20px; max-width: 16ch; font-size: clamp(2rem, 4vw, 2.8rem); }
+  footer p.lead2{ color: var(--ink-dim); max-width: 54ch; margin-bottom: 40px; font-size: 1.05rem; }
+  .contact-row{ display:flex; gap: 16px; flex-wrap: wrap; margin-bottom: 60px; }
+  .fineprint{ color: var(--ink-faint); font-size: 0.86rem; font-family: var(--mono); }
+
+  @media (max-width: 900px){
+    .hero-grid{ grid-template-columns: 1fr; }
+    .process{ grid-template-columns: 1fr 1fr; }
+    .work-grid{ grid-template-columns: 1fr; }
+    .highlight, .highlight.reverse{ grid-template-columns: 1fr; gap: 14px; }
+    .highlight.reverse .h-mark{ order:1; margin-left:0; }
+    .highlight.reverse .h-text{ order:2; text-align:left; margin-left:0; }
+    .highlight.reverse h3, .highlight.reverse p{ margin-left:0; }
+  }
+  @media (max-width: 720px){
+    nav.top .links{ display:none; }
+    .menu-toggle{ display:block; }
+    section{ padding: 92px 0; }
+    header.hero{ padding: 108px 0 80px; }
+  }
+  @media (max-width: 640px){
+    .wrap{ padding: 0 20px; }
+    nav.top{ padding: 16px 20px; }
+    .mobile-panel{ padding: 18px 20px 26px; }
+    .service{ grid-template-columns: 1fr; gap: 8px; }
+    .process{ grid-template-columns: 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    html{ scroll-behavior: auto; }
+    .cursor{ animation: none; }
+    .btn, .work-card{ transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="top">
+  <a class="mark" href="#top"><span class="dot"></span>exity</a>
+  <span class="links">
+    <a href="#services">Services</a>
+    <a href="#process">Process</a>
+    <a href="#work">Work</a>
+    <a href="#contact">Contact</a>
+  </span>
+  <span style="display:flex; align-items:center; gap:14px;">
+    <a class="btn primary sm" href="application.html">Apply for a bot</a>
+    <button class="menu-toggle" id="menuToggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+  </span>
+</nav>
+<div class="mobile-panel" id="mobilePanel">
+  <a href="#services">Services</a>
+  <a href="#process">Process</a>
+  <a href="#work">Work</a>
+  <a href="#contact">Contact</a>
+  <a href="application.html">Apply for a bot →</a>
+</div>
+
+<header class="hero" id="top">
+  <div class="wrap hero-grid">
+    <div>
+      <p class="kicker">// developer services for discord communities</p>
+      <h1>Discord servers and bots, built properly.</h1>
+      <p class="sub">Exity is a small team that sets up servers, writes the custom bots that run them, and keeps both working after launch — for communities that have outgrown templates and free bot hosts.</p>
+      <p class="fine">Free consultation, fixed-price quotes, and ongoing support once it ships.</p>
+      <div class="hero-ctas">
+        <a class="btn primary" href="application.html">Apply for a bot</a>
+        <a class="btn ghost" href="#work">See recent work</a>
+      </div>
+    </div>
+    <div class="terminal" id="terminal">
+      <div class="bar"><span></span><span></span><span></span></div>
+      <div class="body" id="term-body"></div>
+    </div>
+  </div>
+</header>
+
+<section id="problem" class="problem">
+  <div class="wrap inner">
+    <p class="statement">Most servers are still running on a free bot someone set up two years ago<span class="fade"> — and nobody left who understands it.</span></p>
+    <p class="detail">Public bots get abandoned, rate-limited, or shut down without warning, and free templates rarely fit how a specific community actually works. Exity exists for the point where a server has outgrown that — where it needs something built for it, by someone who'll still answer when it breaks.</p>
+  </div>
+</section>
+
+<section id="highlights" class="tint">
+  <div class="wrap highlights">
+    <div class="highlight">
+      <div class="h-mark"></div>
+      <div class="h-text">
+        <h3>Built for your server, not a template</h3>
+        <p>Every bot and every channel structure starts from how your community actually behaves, not a generic setup with your name swapped in.</p>
+      </div>
+    </div>
+    <div class="highlight reverse">
+      <div class="h-mark"></div>
+      <div class="h-text">
+        <h3>Someone answers when it breaks</h3>
+        <p>Discord changes its API, bots go down, roles get misconfigured at 2am. We stay on as maintainers, not just the people who shipped it once.</p>
+      </div>
+    </div>
+    <div class="highlight">
+      <div class="h-mark"></div>
+      <div class="h-text">
+        <h3>You own everything you get</h3>
+        <p>Source code, bot tokens, and data stay yours. If you ever want to move to a different team, there's nothing locking you to us.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="services">
+  <div class="wrap">
+    <h2 class="h2">What we build</h2>
+    <p class="lead">Pick one piece or hand us the whole thing — most clients start with a server rebuild or a single bot, then come back for the rest.</p>
+    <div class="services">
+      <div class="service">
+        <span class="idx">01</span>
+        <div><h3>Server design &amp; setup</h3><p>Channel structure, roles and permissions, onboarding flow, and moderation settings built around how your community actually behaves.</p></div>
+      </div>
+      <div class="service">
+        <span class="idx">02</span>
+        <div><h3>Custom bot development</h3><p>Moderation, verification, leveling, tickets, economy systems — written for your server specifically, so it does exactly what you asked and nothing you didn't.</p></div>
+      </div>
+      <div class="service">
+        <span class="idx">03</span>
+        <div><h3>Integrations &amp; automation</h3><p>Connecting Discord to the rest of your stack — a website, a game server, a payment provider, a database — so information moves without anyone copy-pasting it.</p></div>
+      </div>
+      <div class="service">
+        <span class="idx">04</span>
+        <div><h3>Hosting &amp; maintenance</h3><p>Bots stay online, get patched when Discord's API changes, and get new features on request — so the server doesn't quietly break six months after launch.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="process" class="tint">
+  <div class="wrap">
+    <h2 class="h2">How a project runs</h2>
+    <p class="lead">Four steps, start to finish — no surprise scope, no disappearing after launch.</p>
+    <div class="process">
+      <div class="step"><span class="n">01</span><h3>Discovery call</h3><p>A short chat about your community, what's broken or missing, and what "done" looks like.</p></div>
+      <div class="step"><span class="n">02</span><h3>Scope &amp; quote</h3><p>A written breakdown of what we'll build and a fixed price, before any work starts.</p></div>
+      <div class="step"><span class="n">03</span><h3>Build</h3><p>Regular check-ins as the server or bot comes together, in a staging copy first.</p></div>
+      <div class="step"><span class="n">04</span><h3>Launch &amp; support</h3><p>We move it live, hand over docs for your mods, and stay reachable after.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="work">
+  <div class="wrap">
+    <h2 class="h2">A few examples</h2>
+    <p class="lead">Swap these for real case studies — screenshots, links, or a one-line result work well here.</p>
+    <div class="work-grid">
+      <div class="work-card"><div class="kind">Server rebuild</div><h3>Project name</h3><p>What the community needed, and what changed after the rebuild. One or two sentences.</p></div>
+      <div class="work-card"><div class="kind">Custom bot</div><h3>Project name</h3><p>What the bot does and why it was built instead of using an off-the-shelf option.</p></div>
+      <div class="work-card"><div class="kind">Integration</div><h3>Project name</h3><p>What was connected to Discord, and the manual work it replaced.</p></div>
+    </div>
+  </div>
+</section>
+
+<footer id="contact" class="tint">
+  <div class="wrap inner">
+    <h2>Tell us what you're building.</h2>
+    <p class="lead2">The fastest way to start is the application form — it takes a couple of minutes and gets straight to the questions we'd ask on a call anyway.</p>
+    <div class="contact-row">
+      <a class="btn primary" href="application.html">Apply for a bot</a>
+      <a class="btn ghost" href="https://discord.gg/your-invite" target="_blank" rel="noopener">Join our Discord</a>
+      <a class="btn ghost" href="mailto:team@exity.example">team@exity.example</a>
+    </div>
+    <p class="fineprint">© <span id="year"></span> exity — built with plain HTML, CSS and JS, no build step required.</p>
+  </div>
+</footer>
+
+<script>
+document.getElementById('year').textContent = new Date().getFullYear();
+
+const toggle = document.getElementById('menuToggle');
+const panel = document.getElementById('mobilePanel');
+toggle.addEventListener('click', () => {
+  const open = panel.classList.toggle('open');
+  toggle.classList.toggle('open', open);
+  toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+});
+panel.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+  panel.classList.remove('open'); toggle.classList.remove('open');
+}));
+
+/* Terminal typing sequence — single orchestrated hero moment */
+(function(){
+  const body = document.getElementById('term-body');
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const script = [
+    {type:'prompt', text: 'exity init community-server'},
+    {type:'out', text: '✓ channels created (14)\n✓ roles & permissions applied\n✓ verification flow linked'},
+    {type:'prompt', text: 'exity bot deploy moderation-bot'},
+    {type:'out', text: '✓ deployed to production\n✓ uptime monitor attached'},
+    {type:'prompt', text: '_'}
+  ];
+  function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  if(reduceMotion){
+    body.innerHTML = script.map(l => l.type === 'prompt'
+      ? '<div class="line"><span class="prompt">$</span> ' + escapeHtml(l.text) + '</div>'
+      : '<div class="line out">' + escapeHtml(l.text).replace(/\n/g,'<br>') + '</div>').join('');
+    return;
+  }
+  let i = 0;
+  function typeLine(){
+    if(i >= script.length) return;
+    const item = script[i];
+    const div = document.createElement('div');
+    div.className = 'line' + (item.type === 'out' ? ' out' : '');
+    body.appendChild(div);
+    if(item.type === 'prompt'){
+      let j = 0;
+      div.innerHTML = '<span class="prompt">$</span> <span class="txt"></span><span class="cursor"></span>';
+      const txt = div.querySelector('.txt');
+      const cursor = div.querySelector('.cursor');
+      const iv = setInterval(() => {
+        txt.textContent += item.text[j]; j++;
+        if(j >= item.text.length){ clearInterval(iv); cursor.remove(); i++; setTimeout(typeLine, 260); }
+      }, 32);
+    } else {
+      div.innerHTML = escapeHtml(item.text).replace(/\n/g, '<br>');
+      i++; setTimeout(typeLine, 450);
+    }
+  }
+  typeLine();
+})();
+</script>
+
+</body>
+</html>
